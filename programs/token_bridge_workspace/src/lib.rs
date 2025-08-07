@@ -1,6 +1,6 @@
-
-// programs/token_bridge/src/lib.rs
+// programs/token_bridge_workspace/src/lib.rs
 use anchor_lang::prelude::*;
+use spl_transfer_hook_interface::instruction::TransferHookInstruction;
 
 pub mod instructions;
 pub mod state;
@@ -8,8 +8,8 @@ pub mod error;
 
 use instructions::*;
 
-
 declare_id!("3Ld5LRkUTu85RDU3kfPKQQsDJZXQEBMJA2AYpLCddP4f");
+
 #[program]
 pub mod token_bridge_workspace {
     use super::*;
@@ -56,5 +56,31 @@ pub mod token_bridge_workspace {
 
     pub fn create_bridge_token_mint(ctx: Context<CreateBridgeTokenMint>) -> Result<()> {
         instructions::create_bridge_token_mint(ctx)
+    }
+
+    // Whitelist Hook Operations
+    pub fn initialize_whitelist(ctx: Context<InitializeWhitelist>) -> Result<()> {
+        instructions::initialize_whitelist(ctx)
+    }
+
+    pub fn add_to_whitelist(ctx: Context<ManageWhitelist>, user: Pubkey) -> Result<()> {
+        instructions::add_to_whitelist(ctx, user)
+    }
+
+    pub fn remove_from_whitelist(ctx: Context<ManageWhitelist>, user: Pubkey) -> Result<()> {
+        instructions::remove_from_whitelist(ctx, user)
+    }
+
+    pub fn whitelist_transfer_hook(ctx: Context<WhitelistTransferHook>, amount: u64) -> Result<()> {
+        instructions::whitelist_transfer_hook(ctx, amount)
+    }
+
+    // Fallback for transfer hook interface
+    pub fn fallback<'info>(
+        program_id: &Pubkey,
+        accounts: &'info [AccountInfo<'info>],
+        data: &[u8],
+    ) -> Result<()> {
+        instructions::whitelist_fallback(program_id, accounts, data)
     }
 }
