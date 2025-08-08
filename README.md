@@ -95,6 +95,7 @@ npm run dev
 2. **Get Devnet SOL**  
 ```bash
 solana airdrop 5 --url devnet
+```
 
 3. **Follow Guided Demo** – Complete the walkthrough in the application.
 
