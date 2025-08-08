@@ -85,6 +85,8 @@ NEXT_PUBLIC_NETWORK=devnet
 cd frontend/token-bridge-frontend
 npm run dev
 
+
+
 ---
 
 ## 🧪 Testing the Bridge
