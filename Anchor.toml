@@ -8,11 +8,14 @@ skip-lint = false
 [programs.localnet]
 token_bridge_workspace = "3Ld5LRkUTu85RDU3kfPKQQsDJZXQEBMJA2AYpLCddP4f"
 
+[programs.devnet]
+token_bridge_workspace = "Hfvd4ZLYac9wHs8fz4Yo3DCNqU1qRScMY4tu9GwQP7gw"
+
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

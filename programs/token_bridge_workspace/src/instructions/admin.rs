@@ -1,4 +1,3 @@
-// programs/token_bridge/src/instructions/admin.rs
 use anchor_lang::prelude::*;
 use crate::state::*;
 use crate::error::*;
@@ -23,19 +22,16 @@ pub fn add_approved_hook_program(
 ) -> Result<()> {
     let bridge_config = &mut ctx.accounts.bridge_config;
     
-    // Check if we've reached the maximum number of approved hooks
     require!(
         bridge_config.approved_hook_programs.len() < BridgeConfig::MAX_APPROVED_HOOKS,
         BridgeError::MaxApprovedHooksReached
     );
     
-    // Check if hook program is already approved
     require!(
         !bridge_config.approved_hook_programs.contains(&hook_program_id),
         BridgeError::HookProgramAlreadyApproved
     );
     
-    // Add the hook program to approved list
     bridge_config.approved_hook_programs.push(hook_program_id);
     
     msg!("Added approved hook program: {}", hook_program_id);
@@ -50,7 +46,6 @@ pub fn remove_approved_hook_program(
 ) -> Result<()> {
     let bridge_config = &mut ctx.accounts.bridge_config;
     
-    // Find and remove the hook program
     if let Some(pos) = bridge_config.approved_hook_programs.iter().position(|&x| x == hook_program_id) {
         bridge_config.approved_hook_programs.remove(pos);
         msg!("Removed approved hook program: {}", hook_program_id);

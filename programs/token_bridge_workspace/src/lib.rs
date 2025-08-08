@@ -1,4 +1,3 @@
-// programs/token_bridge_workspace/src/lib.rs
 use anchor_lang::prelude::*;
 use spl_transfer_hook_interface::instruction::TransferHookInstruction;
 
@@ -8,18 +7,16 @@ pub mod error;
 
 use instructions::*;
 
-declare_id!("3Ld5LRkUTu85RDU3kfPKQQsDJZXQEBMJA2AYpLCddP4f");
+declare_id!("Hfvd4ZLYac9wHs8fz4Yo3DCNqU1qRScMY4tu9GwQP7gw");
 
 #[program]
 pub mod token_bridge_workspace {
     use super::*;
 
-    // Bridge Configuration
     pub fn initialize_bridge(ctx: Context<InitializeBridge>) -> Result<()> {
         instructions::initialize_bridge(ctx)
     }
 
-    // Core Bridge Operations
     pub fn wrap_tokens(ctx: Context<WrapTokens>, amount: u64) -> Result<()> {
         instructions::wrap_tokens(ctx, amount)
     }
@@ -28,7 +25,6 @@ pub mod token_bridge_workspace {
         instructions::unwrap_tokens(ctx, amount)
     }
 
-    // Admin Operations
     pub fn add_approved_hook_program(
         ctx: Context<UpdateBridgeConfig>, 
         hook_program_id: Pubkey
@@ -58,7 +54,6 @@ pub mod token_bridge_workspace {
         instructions::create_bridge_token_mint(ctx)
     }
 
-    // Whitelist Hook Operations
     pub fn initialize_whitelist(ctx: Context<InitializeWhitelist>) -> Result<()> {
         instructions::initialize_whitelist(ctx)
     }
@@ -75,7 +70,6 @@ pub mod token_bridge_workspace {
         instructions::whitelist_transfer_hook(ctx, amount)
     }
 
-    // Fallback for transfer hook interface
     pub fn fallback<'info>(
         program_id: &Pubkey,
         accounts: &'info [AccountInfo<'info>],

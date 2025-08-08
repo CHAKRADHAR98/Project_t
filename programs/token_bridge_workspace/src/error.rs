@@ -1,4 +1,3 @@
-// programs/token_bridge/src/error.rs
 use anchor_lang::prelude::*;
 
 #[error_code]
@@ -48,7 +47,6 @@ pub enum BridgeError {
     #[msg("Math overflow error")]
     MathOverflow,
     
-    // Whitelist Hook Errors
     #[msg("Sender is not whitelisted")]
     SenderNotWhitelisted,
     

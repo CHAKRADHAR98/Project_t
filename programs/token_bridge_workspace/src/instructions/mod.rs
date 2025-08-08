@@ -1,4 +1,3 @@
-// programs/token_bridge_workspace/src/instructions/mod.rs
 pub mod initialize_bridge;
 pub mod create_bridge_token_mint;
 pub mod wrap_tokens;

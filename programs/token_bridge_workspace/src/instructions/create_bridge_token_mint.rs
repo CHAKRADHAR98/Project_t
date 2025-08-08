@@ -1,4 +1,3 @@
-// programs/token_bridge/src/instructions/create_bridge_token_mint.rs
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenInterface};
 use crate::state::*;
@@ -20,20 +19,19 @@ pub struct CreateBridgeTokenMint<'info> {
     #[account(
         init,
         payer = authority,
-        mint::decimals = 9, // Standard decimals for bridge token
-        mint::authority = bridge_config, // Bridge config is mint authority
+        mint::decimals = 9, 
+        mint::authority = bridge_config, 
         mint::token_program = token_program
     )]
     pub bridge_token_mint: InterfaceAccount<'info, Mint>,
     
-    pub token_program: Interface<'info, TokenInterface>, // Standard Token program
+    pub token_program: Interface<'info, TokenInterface>, 
     pub system_program: Program<'info, System>,
 }
 
 pub fn create_bridge_token_mint(ctx: Context<CreateBridgeTokenMint>) -> Result<()> {
     let bridge_config = &mut ctx.accounts.bridge_config;
     
-    // Set the bridge token mint address
     bridge_config.bridge_token_mint = ctx.accounts.bridge_token_mint.key();
     
     msg!("Bridge token mint created: {}", bridge_config.bridge_token_mint);

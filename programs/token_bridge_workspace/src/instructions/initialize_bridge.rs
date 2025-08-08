@@ -1,4 +1,3 @@
-// programs/token_bridge/src/instructions/initialize_bridge.rs
 use anchor_lang::prelude::*;
 use crate::state::*;
 use crate::error::*;
@@ -25,7 +24,7 @@ pub fn initialize_bridge(ctx: Context<InitializeBridge>) -> Result<()> {
     
     bridge_config.authority = ctx.accounts.authority.key();
     bridge_config.bump = ctx.bumps.bridge_config;
-    bridge_config.bridge_token_mint = Pubkey::default(); // Will be set when mint is created
+    bridge_config.bridge_token_mint = Pubkey::default(); 
     bridge_config.approved_hook_programs = Vec::new();
     bridge_config.total_locked_amount = 0;
     bridge_config.is_active = true;

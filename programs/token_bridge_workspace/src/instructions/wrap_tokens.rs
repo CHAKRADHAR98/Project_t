@@ -1,4 +1,3 @@
-// programs/token_bridge/src/instructions/wrap_tokens.rs
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -23,10 +22,8 @@ pub struct WrapTokens<'info> {
     )]
     pub bridge_config: Account<'info, BridgeConfig>,
     
-    // Token2022 mint (with potential extensions)
     pub restricted_token_mint: InterfaceAccount<'info, Mint>,
     
-    // User's Token2022 token account
     #[account(
         mut,
         token::mint = restricted_token_mint,
@@ -35,7 +32,6 @@ pub struct WrapTokens<'info> {
     )]
     pub user_restricted_token_account: InterfaceAccount<'info, TokenAccount>,
     
-    // Vault to hold locked Token2022 tokens
     #[account(
         init_if_needed,
         payer = user,
@@ -45,7 +41,6 @@ pub struct WrapTokens<'info> {
     )]
     pub token_vault: Account<'info, TokenVault>,
     
-    // ATA to hold locked Token2022 tokens (owned by token_vault PDA)
     #[account(
         init_if_needed,
         payer = user,
@@ -55,14 +50,12 @@ pub struct WrapTokens<'info> {
     )]
     pub vault_token_account: InterfaceAccount<'info, TokenAccount>,
     
-    // Bridge token mint (standard SPL) - MUST BE WRITABLE for minting
     #[account(
-        mut, // <- THIS WAS MISSING!
+        mut, 
         address = bridge_config.bridge_token_mint @ BridgeError::BridgeTokenMintMismatch
     )]
     pub bridge_token_mint: InterfaceAccount<'info, Mint>,
     
-    // User's bridge token account (where bridge tokens are minted)
     #[account(
         init_if_needed,
         payer = user,
@@ -72,8 +65,8 @@ pub struct WrapTokens<'info> {
     )]
     pub user_bridge_token_account: InterfaceAccount<'info, TokenAccount>,
     
-    pub token_program: Interface<'info, TokenInterface>,        // Standard Token program
-    pub token_2022_program: Interface<'info, TokenInterface>,   // Token2022 program  
+    pub token_program: Interface<'info, TokenInterface>,        
+    pub token_2022_program: Interface<'info, TokenInterface>,  
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
 }
