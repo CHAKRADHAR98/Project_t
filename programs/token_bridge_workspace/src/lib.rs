@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use spl_transfer_hook_interface::instruction::TransferHookInstruction;
 
 pub mod instructions;
 pub mod state;
@@ -15,6 +14,10 @@ pub mod token_bridge_workspace {
 
     pub fn initialize_bridge(ctx: Context<InitializeBridge>) -> Result<()> {
         instructions::initialize_bridge(ctx)
+    }
+
+    pub fn create_bridge_token_mint(ctx: Context<CreateBridgeTokenMint>) -> Result<()> {
+        instructions::create_bridge_token_mint(ctx)
     }
 
     pub fn wrap_tokens(ctx: Context<WrapTokens>, amount: u64) -> Result<()> {
@@ -50,10 +53,6 @@ pub mod token_bridge_workspace {
         instructions::update_bridge_authority(ctx, new_authority)
     }
 
-    pub fn create_bridge_token_mint(ctx: Context<CreateBridgeTokenMint>) -> Result<()> {
-        instructions::create_bridge_token_mint(ctx)
-    }
-
     pub fn initialize_whitelist(ctx: Context<InitializeWhitelist>) -> Result<()> {
         instructions::initialize_whitelist(ctx)
     }
@@ -64,6 +63,10 @@ pub mod token_bridge_workspace {
 
     pub fn remove_from_whitelist(ctx: Context<ManageWhitelist>, user: Pubkey) -> Result<()> {
         instructions::remove_from_whitelist(ctx, user)
+    }
+
+    pub fn toggle_whitelist_status(ctx: Context<ManageWhitelist>) -> Result<()> {
+        instructions::toggle_whitelist_status(ctx)
     }
 
     pub fn whitelist_transfer_hook(ctx: Context<WhitelistTransferHook>, amount: u64) -> Result<()> {

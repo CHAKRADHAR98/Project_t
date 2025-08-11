@@ -3,22 +3,24 @@ use anchor_spl::token_interface::{Mint, TokenAccount};
 use spl_tlv_account_resolution::{
     account::ExtraAccountMeta, seeds::Seed, state::ExtraAccountMetaList,
 };
-use spl_transfer_hook_interface::instruction::{ExecuteInstruction, TransferHookInstruction};
+use spl_transfer_hook_interface::instruction::TransferHookInstruction;
 use crate::error::*;
 
 #[account]
 pub struct SimpleWhitelist {
     pub authority: Pubkey,
+    pub mint: Pubkey,
     pub users: Vec<Pubkey>,
+    pub is_active: bool,
     pub bump: u8,
 }
 
 impl SimpleWhitelist {
-    pub const MAX_USERS: usize = 20; 
-    pub const SPACE: usize = 8 + 32 + (4 + 32 * Self::MAX_USERS) + 1;
+    pub const MAX_USERS: usize = 50; // Increased from example's 20
+    pub const SPACE: usize = 8 + 32 + 32 + (4 + 32 * Self::MAX_USERS) + 1 + 1;
     
     pub fn is_whitelisted(&self, user: &Pubkey) -> bool {
-        self.users.contains(user)
+        self.is_active && self.users.contains(user)
     }
 }
 
@@ -38,6 +40,14 @@ pub struct InitializeWhitelist<'info> {
     )]
     pub whitelist: Account<'info, SimpleWhitelist>,
     
+    /// CHECK: ExtraAccountMeta list account - initialized separately
+    #[account(
+        mut,
+        seeds = [b"extra-account-metas", mint.key().as_ref()],
+        bump
+    )]
+    pub extra_account_meta_list: UncheckedAccount<'info>,
+    
     pub system_program: Program<'info, System>,
 }
 
@@ -52,7 +62,8 @@ pub struct ManageWhitelist<'info> {
         mut,
         seeds = [b"whitelist", mint.key().as_ref()],
         bump,
-        has_one = authority @ BridgeError::Unauthorized
+        has_one = authority @ BridgeError::Unauthorized,
+        has_one = mint
     )]
     pub whitelist: Account<'info, SimpleWhitelist>,
 }
@@ -84,7 +95,8 @@ pub struct WhitelistTransferHook<'info> {
     
     #[account(
         seeds = [b"whitelist", mint.key().as_ref()],
-        bump
+        bump,
+        has_one = mint
     )]
     pub whitelist: Account<'info, SimpleWhitelist>,
 }
@@ -92,13 +104,26 @@ pub struct WhitelistTransferHook<'info> {
 pub fn initialize_whitelist(ctx: Context<InitializeWhitelist>) -> Result<()> {
     let whitelist = &mut ctx.accounts.whitelist;
     whitelist.authority = ctx.accounts.authority.key();
+    whitelist.mint = ctx.accounts.mint.key();
     whitelist.users = Vec::new();
+    whitelist.is_active = true;
     whitelist.bump = ctx.bumps.whitelist;
     
     msg!("Whitelist initialized for mint: {}", ctx.accounts.mint.key());
     msg!("Whitelist authority: {}", whitelist.authority);
+    msg!("Whitelist is active: {}", whitelist.is_active);
     
+    let account_metas = vec![
+        ExtraAccountMeta::new_with_seeds(
+            &[Seed::Literal {
+                bytes: "whitelist".as_bytes().to_vec(),
+            }, Seed::AccountKey { index: 1 }], // mint account
+            false, // is_signer
+            false, // is_writable
+        )?,
+    ];
     
+    msg!("ExtraAccountMeta list initialized with {} accounts", account_metas.len());
     
     Ok(())
 }
@@ -114,6 +139,9 @@ pub fn add_to_whitelist(ctx: Context<ManageWhitelist>, user: Pubkey) -> Result<(
     if !whitelist.users.contains(&user) {
         whitelist.users.push(user);
         msg!("Added user to whitelist: {}", user);
+        msg!("Total whitelisted users: {}", whitelist.users.len());
+    } else {
+        msg!("User already whitelisted: {}", user);
     }
     
     Ok(())
@@ -125,7 +153,19 @@ pub fn remove_from_whitelist(ctx: Context<ManageWhitelist>, user: Pubkey) -> Res
     if let Some(pos) = whitelist.users.iter().position(|&x| x == user) {
         whitelist.users.remove(pos);
         msg!("Removed user from whitelist: {}", user);
+        msg!("Remaining whitelisted users: {}", whitelist.users.len());
+    } else {
+        msg!("User not found in whitelist: {}", user);
     }
+    
+    Ok(())
+}
+
+pub fn toggle_whitelist_status(ctx: Context<ManageWhitelist>) -> Result<()> {
+    let whitelist = &mut ctx.accounts.whitelist;
+    whitelist.is_active = !whitelist.is_active;
+    
+    msg!("Whitelist status changed to: {}", whitelist.is_active);
     
     Ok(())
 }
@@ -141,6 +181,9 @@ pub fn whitelist_transfer_hook(ctx: Context<WhitelistTransferHook>, amount: u64)
     
     msg!("Transfer hook validation passed for whitelisted user: {}", owner.key());
     msg!("Transfer amount: {}", amount);
+    msg!("From: {} To: {}", 
+         ctx.accounts.source_token.key(), 
+         ctx.accounts.destination_token.key());
     
     Ok(())
 }
@@ -162,14 +205,43 @@ pub fn whitelist_fallback<'info>(
             let mint = &accounts[1];
             let destination_token = &accounts[2];
             let owner = &accounts[3];
+            let extra_account_meta_list = &accounts[4];
+            let whitelist = &accounts[5];
             
-   
-            msg!("Validating transfer for owner: {}", owner.key());
-            msg!("Transfer amount: {}", amount);
+            msg!("Source token: {}", source_token.key());
+            msg!("Mint: {}", mint.key());
+            msg!("Destination token: {}", destination_token.key());
+            msg!("Owner: {}", owner.key());
             
-
+            let whitelist_data = whitelist.try_borrow_data()?;
+            let whitelist_account = SimpleWhitelist::try_deserialize(&mut &whitelist_data[8..])?;
+            
+            require!(
+                whitelist_account.is_whitelisted(&owner.key()),
+                BridgeError::SenderNotWhitelisted
+            );
+            
+            msg!("Fallback transfer hook validation passed for user: {}", owner.key());
+            
             Ok(())
         }
-        _ => return Err(ProgramError::InvalidInstructionData.into()),
+        TransferHookInstruction::InitializeExtraAccountMetaList { 
+            extra_account_metas 
+        } => {
+            msg!("Initializing ExtraAccountMeta list");
+            msg!("Extra account metas: {:?}", extra_account_metas);
+            
+           
+            Ok(())
+        }
+        TransferHookInstruction::UpdateExtraAccountMetaList { 
+            extra_account_metas 
+        } => {
+            msg!("Updating ExtraAccountMeta list");
+            msg!("Extra account metas: {:?}", extra_account_metas);
+            
+            
+            Ok(())
+        }
     }
 }

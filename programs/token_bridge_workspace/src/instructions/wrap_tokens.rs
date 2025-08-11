@@ -72,10 +72,8 @@ pub struct WrapTokens<'info> {
 }
 
 pub fn wrap_tokens(ctx: Context<WrapTokens>, amount: u64) -> Result<()> {
-    // Validate the amount is positive first
     require!(amount > 0, BridgeError::InvalidBridgeTokenAmount);
     
-    // Get all the data we need before any mutable operations
     let bridge_config_key = ctx.accounts.bridge_config.key();
     let bridge_config_bump = ctx.accounts.bridge_config.bump;
     let bridge_token_mint_key = ctx.accounts.bridge_config.bridge_token_mint;
@@ -84,7 +82,6 @@ pub fn wrap_tokens(ctx: Context<WrapTokens>, amount: u64) -> Result<()> {
     let token_vault_bump = ctx.bumps.token_vault;
     let mint_decimals = ctx.accounts.restricted_token_mint.decimals;
     
-    // Initialize token vault if this is first wrap for this mint
     let token_vault = &mut ctx.accounts.token_vault;
     if token_vault.restricted_token_mint == Pubkey::default() {
         token_vault.bridge_config = bridge_config_key;
@@ -99,7 +96,14 @@ pub fn wrap_tokens(ctx: Context<WrapTokens>, amount: u64) -> Result<()> {
         msg!("Token vault initialized for mint: {}", restricted_mint_key);
     }
     
-    // Transfer Token2022 tokens from user to vault (locks them)
+    if let Some(hook_program_id) = token_vault.hook_program_id {
+        require!(
+            ctx.accounts.bridge_config.approved_hook_programs.contains(&hook_program_id),
+            BridgeError::UnapprovedHookProgram
+        );
+        msg!("Hook program validated: {}", hook_program_id);
+    }
+    
     transfer_checked(
         CpiContext::new(
             ctx.accounts.token_2022_program.to_account_info(),
@@ -116,7 +120,6 @@ pub fn wrap_tokens(ctx: Context<WrapTokens>, amount: u64) -> Result<()> {
     
     msg!("Locked {} restricted tokens in vault", amount);
     
-    // Mint bridge tokens to user (1:1 with locked tokens)
     let bridge_signer_seeds: &[&[u8]] = &[
         b"bridge_config",
         &[bridge_config_bump],
@@ -137,13 +140,18 @@ pub fn wrap_tokens(ctx: Context<WrapTokens>, amount: u64) -> Result<()> {
     
     msg!("Minted {} bridge tokens to user", amount);
     
-    // Update vault statistics
     token_vault.total_locked = token_vault.total_locked
+        .checked_add(amount)
+        .ok_or(BridgeError::MathOverflow)?;
+    
+    let bridge_config = &mut ctx.accounts.bridge_config;
+    bridge_config.total_locked_amount = bridge_config.total_locked_amount
         .checked_add(amount)
         .ok_or(BridgeError::MathOverflow)?;
     
     msg!("Wrapped {} tokens. Bridge tokens minted to user.", amount);
     msg!("Total locked in vault: {}", token_vault.total_locked);
+    msg!("Total locked across bridge: {}", bridge_config.total_locked_amount);
     
     Ok(())
 }
