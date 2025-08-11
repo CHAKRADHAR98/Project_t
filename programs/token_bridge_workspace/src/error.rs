@@ -52,4 +52,10 @@ pub enum BridgeError {
     
     #[msg("The token is not currently transferring")]
     IsNotCurrentlyTransferring,
+    
+    #[msg("ExtraAccountMeta list initialization failed")]
+    ExtraAccountMetaInitFailed,
+    
+    #[msg("Insufficient account data for operation")]
+    InsufficientAccountData,
 }

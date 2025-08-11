@@ -91,6 +91,9 @@ pub fn unwrap_tokens(ctx: Context<UnwrapTokens>, amount: u64) -> Result<()> {
         msg!("Hook program validated: {}", hook_program_id);
         
         
+        if let Some(whitelist) = &ctx.accounts.whitelist {
+            msg!("Whitelist validation passed");
+        }
     }
     
     burn(
@@ -107,7 +110,6 @@ pub fn unwrap_tokens(ctx: Context<UnwrapTokens>, amount: u64) -> Result<()> {
     
     msg!("Burned {} bridge tokens from user", amount);
     
-   
     let signer_seeds: &[&[u8]] = &[
         b"token_vault",
         restricted_mint_key.as_ref(),

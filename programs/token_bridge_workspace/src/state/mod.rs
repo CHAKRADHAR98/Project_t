@@ -1,4 +1,3 @@
-// programs/token_bridge/src/state/mod.rs
 use anchor_lang::prelude::*;
 
 #[account]
@@ -14,7 +13,6 @@ pub struct BridgeConfig {
 impl BridgeConfig {
     pub const MAX_APPROVED_HOOKS: usize = 10;
     
-    // Calculate space: discriminator + authority + bump + mint + vec + u64 + bool
     pub const SPACE: usize = 8 + 32 + 1 + 32 + (4 + 32 * Self::MAX_APPROVED_HOOKS) + 8 + 1;
 }
 
@@ -31,7 +29,6 @@ pub struct TokenVault {
 }
 
 impl TokenVault {
-    // Calculate space: discriminator + pubkeys + u64 + option + u64 + u8
     pub const SPACE: usize = 8 + 32 + 32 + 32 + 32 + 8 + (1 + 32) + 8 + 1;
 }
 
@@ -57,7 +54,6 @@ pub enum HookType {
     Custom,
 }
 
-// Extension bitmap flags
 pub struct ExtensionFlags;
 impl ExtensionFlags {
     pub const TRANSFER_HOOK: u64 = 1 << 0;
